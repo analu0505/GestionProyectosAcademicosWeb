@@ -1,61 +1,118 @@
-﻿<%@ Page Language="VB" AutoEventWireup="true" CodeBehind="Proyectos.aspx.vb" Inherits="GestionProyectosAcademicosWeb.Proyectos" %>
+﻿<%@ Page Title="Proyectos" Language="VB" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Proyectos.aspx.vb" Inherits="GestionProyectosAcademicosWeb.Proyectos" %>
 
-<!DOCTYPE html>
-<html lang="es">
-<head runat="server">
-    <meta charset="utf-8" />
-    <title>Proyectos</title>
-</head>
-<body>
-<form id="form1" runat="server">
+<asp:Content ID="Content1" ContentPlaceHolderID="MainContent" runat="server">
 
-    <h3>Gestión de Proyectos (Avance 1)</h3>
+    <h2 class="page-title"><i class="bi bi-folder2-open"></i> Gestión de Proyectos</h2>
+    <p class="text-muted">Los proyectos académicos son creados por profesores o coordinadores.</p>
 
-    <asp:Label ID="lblMensaje" runat="server"></asp:Label>
-    <br /><br />
+    <asp:Panel ID="pnlCrearProyecto" runat="server">
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label class="form-label">Título</label>
+                <asp:TextBox ID="txtTitulo" runat="server" CssClass="form-control"></asp:TextBox>
+                <asp:RequiredFieldValidator ID="rfvTitulo" runat="server"
+                    ControlToValidate="txtTitulo"
+                    ErrorMessage="Ingrese el título"
+                    ForeColor="Red"
+                    ValidationGroup="vgP" />
+            </div>
 
-    Título:
-    <asp:TextBox ID="txtTitulo" runat="server"></asp:TextBox>
-    <asp:RequiredFieldValidator ID="rfv1" runat="server"
-        ControlToValidate="txtTitulo" ErrorMessage="* requerido" ForeColor="Red" />
-    <br />
+            <div class="col-md-4">
+                <label class="form-label">Curso</label>
+                <asp:TextBox ID="txtCurso" runat="server" CssClass="form-control"></asp:TextBox>
+                <asp:RequiredFieldValidator ID="rfvCurso" runat="server"
+                    ControlToValidate="txtCurso"
+                    ErrorMessage="Ingrese el curso"
+                    ForeColor="Red"
+                    ValidationGroup="vgP" />
+            </div>
 
-    Curso:
-    <asp:TextBox ID="txtCurso" runat="server"></asp:TextBox>
-    <asp:RequiredFieldValidator ID="rfv2" runat="server"
-        ControlToValidate="txtCurso" ErrorMessage="* requerido" ForeColor="Red" />
-    <br />
+            <div class="col-md-4">
+                <label class="form-label">Estado</label>
+                <asp:DropDownList ID="ddlEstado" runat="server" CssClass="form-select">
+                    <asp:ListItem>Pendiente</asp:ListItem>
+                    <asp:ListItem>En Proceso</asp:ListItem>
+                    <asp:ListItem>Entregado</asp:ListItem>
+                </asp:DropDownList>
+            </div>
+        </div>
 
-    Estado:
-    <asp:DropDownList ID="ddlEstado" runat="server">
-        <asp:ListItem>Pendiente</asp:ListItem>
-        <asp:ListItem>En Proceso</asp:ListItem>
-        <asp:ListItem>Entregado</asp:ListItem>
-    </asp:DropDownList>
-    <br /><br />
+        <div class="mb-4">
+            <asp:Button ID="btnGuardar" runat="server"
+                Text="Insertar Proyecto"
+                CssClass="btn btn-primary"
+                ValidationGroup="vgP"
+                OnClick="btnGuardar_Click" />
+        </div>
+    </asp:Panel>
 
-    <asp:Button ID="btnGuardar" runat="server" Text="Insertar" />
-    <asp:Button ID="btnCargar" runat="server" Text="Cargar" CausesValidation="False" />
-    <br /><br />
+    <div class="table-responsive">
+        <asp:GridView ID="gvProyectos" runat="server"
+            AutoGenerateColumns="False"
+            CssClass="table table-bordered table-hover align-middle"
+            DataKeyNames="IdProyecto"
+            OnRowEditing="gvProyectos_RowEditing"
+            OnRowCancelingEdit="gvProyectos_RowCancelingEdit"
+            OnRowUpdating="gvProyectos_RowUpdating"
+            OnRowDeleting="gvProyectos_RowDeleting"
+            OnRowDataBound="gvProyectos_RowDataBound">
 
-    <asp:GridView ID="gvProyectos" runat="server" AutoGenerateColumns="False" DataKeyNames="IdProyecto"
-        OnRowCommand="gvProyectos_RowCommand">
-        <Columns>
-            <asp:BoundField DataField="IdProyecto" HeaderText="ID" />
-            <asp:BoundField DataField="Titulo" HeaderText="Título" />
-            <asp:BoundField DataField="Curso" HeaderText="Curso" />
-            <asp:BoundField DataField="Estado" HeaderText="Estado" />
-            <asp:TemplateField HeaderText="Acción">
-                <ItemTemplate>
-                    <asp:Button runat="server" Text="Eliminar"
-                        CommandName="ELIMINAR"
-                        CommandArgument='<%# Eval("IdProyecto") %>'
-                        OnClientClick="return confirm('¿Eliminar?');" />
-                </ItemTemplate>
-            </asp:TemplateField>
-        </Columns>
-    </asp:GridView>
+            <Columns>
+                <asp:BoundField DataField="IdProyecto" HeaderText="ID" ReadOnly="True" />
+                <asp:BoundField DataField="Titulo" HeaderText="Título" />
+                <asp:BoundField DataField="Curso" HeaderText="Curso" />
 
-</form>
-</body>
-</html>
+                <asp:TemplateField HeaderText="Estado">
+                    <ItemTemplate>
+                        <%# Eval("Estado") %>
+                    </ItemTemplate>
+                    <EditItemTemplate>
+                        <asp:DropDownList ID="ddlEstadoEdit" runat="server" CssClass="form-select form-select-sm">
+                            <asp:ListItem>Pendiente</asp:ListItem>
+                            <asp:ListItem>En Proceso</asp:ListItem>
+                            <asp:ListItem>Entregado</asp:ListItem>
+                        </asp:DropDownList>
+                    </EditItemTemplate>
+                </asp:TemplateField>
+
+                <asp:BoundField DataField="Creador" HeaderText="Creador" ReadOnly="True" />
+
+                <asp:TemplateField HeaderText="Acciones">
+                    <ItemTemplate>
+                        <asp:LinkButton ID="btnEditar" runat="server"
+                            CommandName="Edit"
+                            CausesValidation="False"
+                            CssClass="btn btn-sm btn-warning me-1">
+                            <i class="bi bi-pencil-square"></i> Editar
+                        </asp:LinkButton>
+
+                        <asp:LinkButton ID="btnEliminar" runat="server"
+                            CommandName="Delete"
+                            CausesValidation="False"
+                            CssClass="btn btn-sm btn-danger"
+                            OnClientClick="return confirm('¿Seguro que desea eliminar este proyecto?');">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </asp:LinkButton>
+                    </ItemTemplate>
+
+                    <EditItemTemplate>
+                        <asp:LinkButton ID="btnGuardarEdit" runat="server"
+                            CommandName="Update"
+                            CausesValidation="False"
+                            CssClass="btn btn-sm btn-success me-1">
+                            <i class="bi bi-check-circle"></i> Guardar
+                        </asp:LinkButton>
+
+                        <asp:LinkButton ID="btnCancelarEdit" runat="server"
+                            CommandName="Cancel"
+                            CausesValidation="False"
+                            CssClass="btn btn-sm btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </asp:LinkButton>
+                    </EditItemTemplate>
+                </asp:TemplateField>
+            </Columns>
+        </asp:GridView>
+    </div>
+
+</asp:Content>

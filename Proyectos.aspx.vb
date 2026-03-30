@@ -1,101 +1,134 @@
-﻿Imports System.Data
-Imports System.Data.SqlClient
-Imports System.Configuration
+﻿Imports GestionProyectosAcademicosWeb.Utils
 
 Public Class Proyectos
     Inherits System.Web.UI.Page
 
-    Private ReadOnly cn As String =
-        ConfigurationManager.ConnectionStrings("CN").ConnectionString
+    Private dbP As New dbProyecto()
 
-    Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs) Handles Me.Load
+    Protected Sub Page_Load(sender As Object, e As EventArgs) Handles Me.Load
+        If Session("Rol") Is Nothing OrElse Session("IdUsuario") Is Nothing Then
+            Response.Redirect("Login.aspx")
+        End If
+
+        Dim rol As String = Session("Rol").ToString()
+
+        ' Solo Profesor y Coordinador pueden crear proyectos
+        pnlCrearProyecto.Visible = (rol = "Profesor" OrElse rol = "Coordinador")
+
         If Not IsPostBack Then
             Cargar()
         End If
     End Sub
 
-    Protected Sub btnGuardar_Click(sender As Object, e As EventArgs) Handles btnGuardar.Click
-        Try
-            Using conn As New SqlConnection(cn)
-                Using cmd As New SqlCommand("
-                    INSERT INTO Proyecto (Titulo, Curso, Estado)
-                    VALUES (@Titulo, @Curso, @Estado)
-                ", conn)
+    Protected Sub btnGuardar_Click(sender As Object, e As EventArgs)
+        Dim err As String = ""
+        Dim rol As String = Session("Rol").ToString()
 
-                    cmd.Parameters.AddWithValue("@Titulo", txtTitulo.Text.Trim())
-                    cmd.Parameters.AddWithValue("@Curso", txtCurso.Text.Trim())
-                    cmd.Parameters.AddWithValue("@Estado", ddlEstado.SelectedValue)
+        If rol <> "Profesor" AndAlso rol <> "Coordinador" Then
+            SwalUtils.ShowSwal(Me, "Acceso denegado", "Solo Profesor o Coordinador pueden crear proyectos.", "warning")
+            Exit Sub
+        End If
 
-                    conn.Open()
-                    cmd.ExecuteNonQuery()
-                End Using
-            End Using
+        If Not Page.IsValid Then
+            SwalUtils.ShowSwal(Me, "Atención", "Complete los campos requeridos.", "warning")
+            Exit Sub
+        End If
 
-            lblMensaje.ForeColor = Drawing.Color.Green
-            lblMensaje.Text = "Insertado."
+        If String.IsNullOrWhiteSpace(txtTitulo.Text) OrElse String.IsNullOrWhiteSpace(txtCurso.Text) Then
+            SwalUtils.ShowSwal(Me, "Atención", "Título y curso son obligatorios.", "warning")
+            Exit Sub
+        End If
 
+        Dim pr As New Models.Proyecto With {
+            .Titulo = txtTitulo.Text.Trim(),
+            .Curso = txtCurso.Text.Trim(),
+            .Estado = ddlEstado.SelectedValue,
+            .IdUsuarioCreador = Convert.ToInt32(Session("IdUsuario"))
+        }
+
+        If dbP.CrearProyecto(pr, err) Then
             txtTitulo.Text = ""
             txtCurso.Text = ""
             ddlEstado.SelectedIndex = 0
-
             Cargar()
-
-        Catch ex As Exception
-            lblMensaje.ForeColor = Drawing.Color.Red
-            lblMensaje.Text = "Error: " & ex.Message
-        End Try
-    End Sub
-
-    Protected Sub btnCargar_Click(sender As Object, e As EventArgs) Handles btnCargar.Click
-        Cargar()
+            SwalUtils.ShowSwal(Me, "Éxito", "Proyecto insertado correctamente.", "success")
+        Else
+            SwalUtils.ShowSwal(Me, "Error", If(err = "", "No se pudo insertar el proyecto.", err), "error")
+        End If
     End Sub
 
     Private Sub Cargar()
-        Try
-            Dim dt As New DataTable()
-
-            Using conn As New SqlConnection(cn)
-                Using cmd As New SqlCommand("
-                    SELECT IdProyecto, Titulo, Curso, Estado
-                    FROM Proyecto
-                    ORDER BY IdProyecto DESC
-                ", conn)
-                    Using da As New SqlDataAdapter(cmd)
-                        da.Fill(dt)
-                    End Using
-                End Using
-            End Using
-
-            gvProyectos.DataSource = dt
-            gvProyectos.DataBind()
-
-        Catch ex As Exception
-            lblMensaje.ForeColor = Drawing.Color.Red
-            lblMensaje.Text = "Error al cargar: " & ex.Message
-        End Try
+        Dim err As String = ""
+        gvProyectos.DataSource = dbP.Listar(Session("Rol").ToString(), Convert.ToInt32(Session("IdUsuario")), err)
+        gvProyectos.DataBind()
     End Sub
 
-    Protected Sub gvProyectos_RowCommand(sender As Object, e As GridViewCommandEventArgs)
-        If e.CommandName = "ELIMINAR" Then
-            Dim id As Integer = Convert.ToInt32(e.CommandArgument)
+    Protected Sub gvProyectos_RowDataBound(sender As Object, e As GridViewRowEventArgs)
+        If e.Row.RowType = DataControlRowType.DataRow Then
+            Dim rol As String = Session("Rol").ToString()
+            Dim creador As String = DataBinder.Eval(e.Row.DataItem, "Creador").ToString()
+            Dim nombreSesion As String = Session("Nombre").ToString()
 
-            Try
-                Using conn As New SqlConnection(cn)
-                    Using cmd As New SqlCommand("DELETE FROM Proyecto WHERE IdProyecto=@Id", conn)
-                        cmd.Parameters.AddWithValue("@Id", id)
-                        conn.Open()
-                        cmd.ExecuteNonQuery()
-                    End Using
-                End Using
+            Dim btnEditar As LinkButton = TryCast(e.Row.FindControl("btnEditar"), LinkButton)
+            Dim btnEliminar As LinkButton = TryCast(e.Row.FindControl("btnEliminar"), LinkButton)
 
-                lblMensaje.ForeColor = Drawing.Color.Green
-                lblMensaje.Text = "Eliminado."
-                Cargar()
+            Dim puedeEditar As Boolean = (rol = "Coordinador") OrElse (rol = "Profesor" AndAlso creador = nombreSesion)
 
-            Catch ex As Exception
-                lblMensaje.ForeColor = Drawing.Color.Red
-                lblMensaje.Text = "Error al eliminar: " & ex.Message
-            End Try
+            If btnEditar IsNot Nothing Then btnEditar.Visible = puedeEditar
+            If btnEliminar IsNot Nothing Then btnEliminar.Visible = puedeEditar
+        End If
+    End Sub
+
+    Protected Sub gvProyectos_RowEditing(sender As Object, e As GridViewEditEventArgs)
+        gvProyectos.EditIndex = e.NewEditIndex
+        Cargar()
+    End Sub
+
+    Protected Sub gvProyectos_RowCancelingEdit(sender As Object, e As GridViewCancelEditEventArgs)
+        gvProyectos.EditIndex = -1
+        Cargar()
+    End Sub
+
+    Protected Sub gvProyectos_RowUpdating(sender As Object, e As GridViewUpdateEventArgs)
+        Dim err As String = ""
+        Dim idProyecto As Integer = Convert.ToInt32(gvProyectos.DataKeys(e.RowIndex).Value)
+        Dim row As GridViewRow = gvProyectos.Rows(e.RowIndex)
+
+        Dim titulo As String = CType(row.Cells(1).Controls(0), TextBox).Text.Trim()
+        Dim curso As String = CType(row.Cells(2).Controls(0), TextBox).Text.Trim()
+        Dim ddlEstadoEdit As DropDownList = CType(row.FindControl("ddlEstadoEdit"), DropDownList)
+        Dim estado As String = ddlEstadoEdit.SelectedValue
+
+        If String.IsNullOrWhiteSpace(titulo) OrElse String.IsNullOrWhiteSpace(curso) Then
+            SwalUtils.ShowSwal(Me, "Atención", "No deje campos vacíos.", "warning")
+            Exit Sub
+        End If
+
+        Dim pr As New Models.Proyecto With {
+            .IdProyecto = idProyecto,
+            .Titulo = titulo,
+            .Curso = curso,
+            .Estado = estado
+        }
+
+        If dbP.Actualizar(pr, err) Then
+            gvProyectos.EditIndex = -1
+            Cargar()
+            SwalUtils.ShowSwal(Me, "Actualizado", "Proyecto actualizado correctamente.", "success")
+        Else
+            SwalUtils.ShowSwal(Me, "Error", If(err = "", "No se pudo actualizar el proyecto.", err), "error")
+        End If
+    End Sub
+
+    Protected Sub gvProyectos_RowDeleting(sender As Object, e As GridViewDeleteEventArgs)
+        Dim err As String = ""
+        Dim idProyecto As Integer = Convert.ToInt32(gvProyectos.DataKeys(e.RowIndex).Value)
+
+        If dbP.Eliminar(idProyecto, err) Then
+            Cargar()
+            SwalUtils.ShowSwal(Me, "Eliminado", "Proyecto eliminado correctamente.", "success")
+        Else
+            SwalUtils.ShowSwal(Me, "Error al eliminar", If(err = "", "No se pudo eliminar el proyecto.", err), "error")
         End If
     End Sub
 End Class

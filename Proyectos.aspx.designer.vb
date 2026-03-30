@@ -14,22 +14,13 @@ Option Explicit On
 Partial Public Class Proyectos
 
     '''<summary>
-    '''Control form1.
+    '''Control pnlCrearProyecto.
     '''</summary>
     '''<remarks>
     '''Campo generado automáticamente.
     '''Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
     '''</remarks>
-    Protected WithEvents form1 As Global.System.Web.UI.HtmlControls.HtmlForm
-
-    '''<summary>
-    '''Control lblMensaje.
-    '''</summary>
-    '''<remarks>
-    '''Campo generado automáticamente.
-    '''Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
-    '''</remarks>
-    Protected WithEvents lblMensaje As Global.System.Web.UI.WebControls.Label
+    Protected WithEvents pnlCrearProyecto As Global.System.Web.UI.WebControls.Panel
 
     '''<summary>
     '''Control txtTitulo.
@@ -41,13 +32,13 @@ Partial Public Class Proyectos
     Protected WithEvents txtTitulo As Global.System.Web.UI.WebControls.TextBox
 
     '''<summary>
-    '''Control rfv1.
+    '''Control rfvTitulo.
     '''</summary>
     '''<remarks>
     '''Campo generado automáticamente.
     '''Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
     '''</remarks>
-    Protected WithEvents rfv1 As Global.System.Web.UI.WebControls.RequiredFieldValidator
+    Protected WithEvents rfvTitulo As Global.System.Web.UI.WebControls.RequiredFieldValidator
 
     '''<summary>
     '''Control txtCurso.
@@ -59,13 +50,13 @@ Partial Public Class Proyectos
     Protected WithEvents txtCurso As Global.System.Web.UI.WebControls.TextBox
 
     '''<summary>
-    '''Control rfv2.
+    '''Control rfvCurso.
     '''</summary>
     '''<remarks>
     '''Campo generado automáticamente.
     '''Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
     '''</remarks>
-    Protected WithEvents rfv2 As Global.System.Web.UI.WebControls.RequiredFieldValidator
+    Protected WithEvents rfvCurso As Global.System.Web.UI.WebControls.RequiredFieldValidator
 
     '''<summary>
     '''Control ddlEstado.
@@ -84,15 +75,6 @@ Partial Public Class Proyectos
     '''Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
     '''</remarks>
     Protected WithEvents btnGuardar As Global.System.Web.UI.WebControls.Button
-
-    '''<summary>
-    '''Control btnCargar.
-    '''</summary>
-    '''<remarks>
-    '''Campo generado automáticamente.
-    '''Para modificarlo, mueva la declaración del campo del archivo del diseñador al archivo de código subyacente.
-    '''</remarks>
-    Protected WithEvents btnCargar As Global.System.Web.UI.WebControls.Button
 
     '''<summary>
     '''Control gvProyectos.
